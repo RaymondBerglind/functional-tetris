@@ -9,13 +9,17 @@ function createMatrix(w, h) {
 export function getInitialState() {
     return {
         arena: createMatrix(12, 20),
-
         player: {
-            matrix: null,
+            matrix: getRandomPiece(),
             position: {x: 0, y: 0},
             score: 0
         }
     }
+}
+
+export function getRandomPiece() {
+    const pieces = 'ILJOTSZ';
+    return createPiece(pieces[pieces.length * Math.random() | 0]);
 }
 
 export function createPiece(type) {
@@ -98,7 +102,7 @@ export function collide(arena, player) {
     return false;
 }
 
-export function merge(state) {
+export function mergePlayerAndArena(state) {
     state.player.matrix.forEach((row, y) => {
         row.forEach ((value, x) => {
             if (value !== 0) {
@@ -110,69 +114,62 @@ export function merge(state) {
 }
 
 export function playerReset(state) {
-    const pieces = 'ILJOTSZ';
-    player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
-    player.position.y = 0;
-    player.position.x = (arena[0].length / 2 | 0) -
-                        (player.matrix[0].length / 2 | 0);
-    if (collide(arena, player)) {
-        arena.forEach(row => row.fill(0));
-        player.score = 0;
-        updateScore();
+    state.player.matrix = getRandomPiece();
+    state.player.position = {
+        y: 0,
+        x: (state.arena[0].length / 2 | 0) -
+        (state.player.matrix[0].length / 2 | 0)
+    };
+
+    if (collide(state.arena, state.player)) {
+        state.arena.forEach(row => row.fill(0));
+        state.player.score = 0;
     }
+    return state;
 }
 
 export function playerMove(state, dir) {
     state.player.position.x += dir;
     if (collide(state.arena, state.player)) {
-        statee.player.position.x -= dir;
+        state.player.position.x -= dir;
     }
     return state;
 }
 
-export function playerDrop() {
-    player.position.y++;
-    if (collide(arena, player)) {
-        player.position.y--;
-        merge(arena, player);
-        playerReset();
-        arenaSweep();
-        updateScore();
+export function playerDrop(state) {
+    state.player.position.y++;
+    if (collide(state.arena, state.player)) {
+        state.player.position.y--;
+        state = arenaSweep(playerReset(mergePlayerAndArena(state)));;
     }
-    dropCounter = 0;
+
+    return state;
 }
 
-export function playerRotate(dir) {
-    const position = player.position.x;
+export function playerRotate(state) {
+    const position = state.player.position.x;
     let offset = 1;
-    rotate(player.matrix, dir);
-    while (collide(arena, player)) {
-        player.position.x += offset;
+    state.player.matrix = rotate(state.player.matrix);
+    while (collide(state.arena, state.player)) {
+        state.player.position.x += offset;
         offset = -(offset + (offset > 0 ? 1 : -1));
-        if (offset > player.matrix[0].length) {
-            rotate(player.matrix, -dir);
-            player.position.x = position;
-            return;
+        if (offset > state.player.matrix[0].length) {
+            state.player.matrix = rotate(state.player.matrix, -1);
+            state.player.position.x = position;
+            return state;
         }
     }
+    return state;
 }
 
-export function rotate(matrix, dir) {
-    for (let y = 0; y < matrix.length; ++y) {
-        for (let x = 0; x < y; ++x) {
-            [
-                matrix[x][y],
-                matrix[y][x]
-            ] = [
-                matrix[y][x],
-                matrix[x][y]
-            ]
-        }
-    }
+// Assuming a square matrix
+export function rotate(matrix, dir = 1) {
+    var newMatrix = matrix.map((row, i) => {
+        return row.map((_, j) => {
+            var rowNumber = dir < 0 ? j : matrix.length - 1 - j;
+            return matrix[rowNumber][i];
+        })
+    })
 
-    if (dir > 0) {
-        matrix.forEach(row => row.reverse());
-    } else {
-        matrix.reverse();
-    }
+    return dir < 0 ? newMatrix.reverse() : newMatrix;
 }
