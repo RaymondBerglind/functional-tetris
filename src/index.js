@@ -21,7 +21,10 @@ function drawMatrix(matrix, offset) {
         row.forEach((value, x) => {
             if (value !== 0) {
                 context.fillStyle = colors[value];
+                // context.strokeStyle = '#E5E5E5'
+                // context.lineWidth = 1;
                 context.fillRect(x + offset.x, y + offset.y, 1, 1);
+                // context.strokeRect(x + offset.x, y + offset.y, 1, 1);
             }
         });
     });

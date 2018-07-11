@@ -153,7 +153,7 @@ export function playerRotate(state) {
     while (collide(state.arena, state.player)) {
         state.player.position.x += offset;
         offset = -(offset + (offset > 0 ? 1 : -1));
-        if (offset > state.player.matrix[0].length) {
+        if (Math.abs(offset) > state.player.matrix[0].length + 1) {
             state.player.matrix = rotate(state.player.matrix, -1);
             state.player.position.x = position;
             return state;
